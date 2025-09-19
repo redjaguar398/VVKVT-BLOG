@@ -1,40 +1,55 @@
-// Name of the cache
-const CACHE_NAME = "blogspot-pwa-v1";
-
-// Files to cache (add your blog’s static files here)
+const CACHE_NAME = 'my-blog-dynamic-cache-v1';
 const urlsToCache = [
-  "/",                // Home
-  "/index.html",      // Main page
-  "/favicon.ico",     // Favicon
-  "/manifest.json"    // Manifest file
-  // You can add CSS, JS, or image links if they are fixed
+  // These are your static assets that are always needed
+  '/', // Your homepage
+  '/index.html', // Fallback, good practice
+  'https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700,700italic|Oswald:400,700|Roboto+Condensed:400,400italic,700,700italic&subset=latin,latin-ext',
+  'https://fonts.googleapis.com/css?family=Roboto+Slab:400,700&subset=latin,latin-ext',
+  '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css',
 ];
 
-// Install Service Worker and cache resources
-self.addEventListener("install", event => {
+self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => {
+        return cache.addAll(urlsToCache);
+      })
   );
 });
 
-// Activate Service Worker (cleanup old caches if any)
-self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames
-          .filter(name => name !== CACHE_NAME)
-          .map(name => caches.delete(name))
-      );
-    })
-  );
-});
-
-// Fetch cached resources
-self.addEventListener("fetch", event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
-  );
+self.addEventListener('fetch', event => {
+  // Check if this is a navigation request
+  if (event.request.mode === 'navigate') {
+    // If so, check for a cached version
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          // If a cached response exists, return it
+          if (response) {
+            return response;
+          }
+          // If not, fetch from the network and cache it
+          return fetch(event.request)
+            .then(networkResponse => {
+              // Open a new cache and add the network response to it
+              return caches.open(CACHE_NAME)
+                .then(cache => {
+                  cache.put(event.request, networkResponse.clone());
+                  return networkResponse;
+                });
+            });
+        })
+    );
+  } else {
+    // For other assets (images, CSS, JS), use a cache-first strategy
+    event.respondWith(
+      caches.match(event.request)
+        .then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          return fetch(event.request);
+        })
+    );
+  }
 });
