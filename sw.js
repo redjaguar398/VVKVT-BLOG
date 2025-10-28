@@ -1,13 +1,19 @@
-const CACHE_NAME = 'my-blog-dynamic-cache-v4';
+// ====== Blogger Service Worker (Smooth Auto Refresh) ======
+
+// Change this version each time you update your blog or design
+const CACHE_NAME = 'vvkvt-cache-v3';
+
+// Files to pre-cache (essential only)
 const PRECACHE_URLS = [
   '/', // homepage
-  'https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700,700italic|Oswald:400,700|Roboto+Condensed:400,400italic,700,700italic&subset=latin,latin-ext',
-  'https://fonts.googleapis.com/css?family=Roboto+Slab:400,700&subset=latin,latin-ext',
-  '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
+  'https://fonts.googleapis.com/css?family=PT+Sans:400,700|Oswald:400,700|Roboto+Condensed:400,700&display=swap',
+  'https://fonts.googleapis.com/css?family=Roboto+Slab:400,700&display=swap',
+  'https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
 ];
 
-// Install: cache basic files
+// Install: cache essential files
 self.addEventListener('install', event => {
+  console.log('[SW] Install event');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(PRECACHE_URLS))
@@ -15,41 +21,41 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate: clear old cache
+// Activate: clear old caches + claim clients
 self.addEventListener('activate', event => {
+  console.log('[SW] Activate event');
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('[SW] Removing old cache:', key);
+            return caches.delete(key);
+          }
+        })
+      )
     ).then(() => self.clients.claim())
   );
 });
 
-// Fetch: network-first with smooth update
+// Fetch: network-first, then cache fallback
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
   event.respondWith(
     fetch(event.request)
-      .then(networkResponse => {
-        // Update cache with latest version
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, networkResponse.clone());
-        });
-        return networkResponse;
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
       })
       .catch(() =>
-        caches.match(event.request).then(resp =>
-          resp || new Response('You are offline. Please reconnect.')
-        )
+        caches.match(event.request).then(resp => resp || new Response('You are offline. Please reconnect.'))
       )
   );
 });
 
-// 🔄 Notify all tabs when new service worker activates
-self.addEventListener('controllerchange', () => {
-  self.clients.matchAll({ type: 'window' }).then(clients => {
-    for (const client of clients) {
-      client.postMessage({ action: 'refresh-page' });
-    }
-  });
+// Listen for messages from page (to trigger skipWaiting manually if needed)
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
