@@ -1,42 +1,33 @@
-// ===== Blogger Service Worker - Auto Update on Load =====
-
-// Increment version every time you update your blog or template
-const CACHE_NAME = 'vvkvt-cache-v4';
-
-// Precache basic assets
+// VVKVT Blog — Popular PWA Service Worker
+const CACHE_VERSION = 'v1.0.0';  // 🔹 bump this to refresh cache
+const CACHE_NAME = `vvkvt-cache-${CACHE_VERSION}`;
 const PRECACHE_URLS = [
   '/', // homepage
-  'https://fonts.googleapis.com/css?family=PT+Sans:400,700|Oswald:400,700|Roboto+Condensed:400,700&display=swap',
-  'https://fonts.googleapis.com/css?family=Roboto+Slab:400,700&display=swap',
-  'https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
+  'https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&display=swap'
 ];
 
-// Install and cache core files
+// --- Install Event: pre-cache essentials ---
 self.addEventListener('install', event => {
-  console.log('[SW] Installing new service worker...');
+  console.log('[SW] Install');
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then(cache => cache.addAll(PRECACHE_URLS))
   );
+  self.skipWaiting();
 });
 
-// Activate new service worker immediately
+// --- Activate Event: clear old caches ---
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating new service worker...');
+  console.log('[SW] Activate');
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.map(key => {
-        if (key !== CACHE_NAME) {
-          console.log('[SW] Removing old cache:', key);
-          return caches.delete(key);
-        }
+        if (key !== CACHE_NAME) return caches.delete(key);
       }))
     ).then(() => self.clients.claim())
   );
 });
 
-// Fetch with network-first strategy
+// --- Fetch Event: network-first, cache fallback ---
 self.addEventListener('fetch', event => {
   event.respondWith(
     fetch(event.request)
