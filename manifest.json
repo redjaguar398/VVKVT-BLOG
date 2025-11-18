@@ -1,12 +1,12 @@
 {
   "name": "VVKVT KṬP",
   "short_name": "VVKVT KṬP",
-  "start_url": "/",
+  "start_url": "/?pwa=true",
   "scope": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "white",
   "theme_color": "white",
-  "description": "Blogger PWA without loading bar.",
+  "description": "VVKVT PWA with standalone mode and no loading bar.",
   "icons": [
     {
       "src": "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEqrlogLxyQN458_eUs2UN7oqzr0EY2IdFNNIBcgFr_EvL7HDtG7BqvWlr2LDDeJty9BALnpRNdYZ6ksPVvfz1dy4Z1L3ApVBhvSRj-ME2VjqSJQfdB3WLgKe5SBIhlS-aBaV4Vtv-puyp5wjZKpbX3p-9PVvUy0Xjjepw4MErSZcyEE_PkEUyP4NtYAFT/s192/1000978107.png",
