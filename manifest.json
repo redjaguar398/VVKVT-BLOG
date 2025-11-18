@@ -2,9 +2,9 @@
   "name": "VVKVT KṬP",
   "short_name": "VVKVT KṬP",
   "start_url": ".",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "display": "minimal-ui",
+  "background_color": "transparent",
+  "theme_color": "transparent",
   "description": "A responsive and stylish Blogger theme.",
   "icons": [
     {
