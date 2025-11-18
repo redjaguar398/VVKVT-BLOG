@@ -1,24 +1,60 @@
-self.addEventListener("install", function (event) {
+// ------------------------------------------------------
+// VVKVT KṬP - Service Worker
+// Simple cache-first PWA service worker for Blogger
+// ------------------------------------------------------
+
+const CACHE_NAME = "vvkvt-cache-v1";
+const OFFLINE_URL = "/offline.html";
+
+// Install SW
+self.addEventListener("install", (event) => {
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      cache.addAll([OFFLINE_URL]).catch(() => {});
+    })
+  );
 });
 
-self.addEventListener("activate", function (event) {
-  event.waitUntil(clients.claim());
+// Activate SW
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    )
+  );
+  return self.clients.claim();
 });
 
-// Simple cache
-self.addEventListener("fetch", function (event) {
+// Fetch Handler
+self.addEventListener("fetch", (event) => {
+  // Only GET requests
+  if (event.request.method !== "GET") return;
+
   event.respondWith(
-    caches.open("vvkvt-cache").then(function (cache) {
-      return cache.match(event.request).then(function (response) {
-        return (
-          response ||
-          fetch(event.request).then(function (fetchRes) {
-            cache.put(event.request, fetchRes.clone());
-            return fetchRes;
-          })
-        );
-      });
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(event.request)
+        .then((response) => {
+          // Cache the response if valid
+          if (
+            response &&
+            response.status === 200 &&
+            response.type === "basic"
+          ) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone);
+            });
+          }
+          return response;
+        })
+        .catch(() => caches.match(OFFLINE_URL));
     })
   );
 });
