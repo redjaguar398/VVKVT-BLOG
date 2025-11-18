@@ -1,11 +1,52 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>VVKVT PWA Files</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VVKVT PWA Root</title>
+
+  <!-- Connect Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Basic Styling (optional) -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      text-align: center;
+      padding: 50px;
+      color: #333;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+    p {
+      font-size: 16px;
+    }
+    code {
+      background: #eee;
+      padding: 4px 6px;
+      border-radius: 5px;
+    }
+  </style>
 </head>
+
 <body>
   <h1>VVKVT PWA Root</h1>
-  <p>This folder only hosts manifest.json and sw.js for Blogger.</p>
+  <p>This GitHub Pages site hosts only the required PWA files:</p>
+
+  <p><code>manifest.json</code> and <code>sw.js</code></p>
+
+  <p>You can safely close this page.</p>
+
+  <!-- Optional: Register Service Worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js")
+        .then(() => console.log("SW registered"))
+        .catch(err => console.error("SW FAILED:", err));
+    }
+  </script>
 </body>
 </html>
