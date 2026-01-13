@@ -1,60 +1,25 @@
-// ------------------------------------------------------
-// VVKVT KṬP - Service Worker
-// Simple cache-first PWA service worker for Blogger
-// ------------------------------------------------------
+const CACHE = 'vvkvt-pwa-v1';
+const OFFLINE = '/';
 
-const CACHE_NAME = "vvkvt-cache-v1";
-const OFFLINE_URL = "/offline.html";
-
-// Install SW
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      cache.addAll([OFFLINE_URL]).catch(() => {});
-    })
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => cache.add(OFFLINE))
   );
+  self.skipWaiting();
 });
 
-// Activate SW
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
     )
   );
-  return self.clients.claim();
+  self.clients.claim();
 });
 
-// Fetch Handler
-self.addEventListener("fetch", (event) => {
-  // Only GET requests
-  if (event.request.method !== "GET") return;
-
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(event.request)
-        .then((response) => {
-          // Cache the response if valid
-          if (
-            response &&
-            response.status === 200 &&
-            response.type === "basic"
-          ) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, clone);
-            });
-          }
-          return response;
-        })
-        .catch(() => caches.match(OFFLINE_URL));
-    })
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    fetch(e.request).catch(() => caches.match(e.request))
   );
 });
